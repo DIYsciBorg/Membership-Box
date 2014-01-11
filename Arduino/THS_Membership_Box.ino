@@ -32,6 +32,11 @@ Adafruit_Thermal printer(11,10);  // RX, TX
 LiquidCrystal lcd(9, 8, 7, 6, 5, 4);
 #include <EEPROM.h>
 
+#include "DIYSciBorg_RTC8564.h"
+#include  <Wire.h>
+
+RTC myClock;
+
 // PIN defines
 const int ledPin = 13;
 const int BApulse = 2;
@@ -70,19 +75,6 @@ const int transactionAudit = 3;
 const int BAon = LOW;
 const int BAoff = HIGH;
 
-/* Repeatable strings:
-char strTHS[ ] = "TokyoHackerSpace";
-char strSorry[ ] = "Sorry. No prize.";
-char strWinner[ ] = "You are a WINNER!";
-char strWrite1[ ] = "Write your name on this";
-char strWrite2[ ] = "receipt. Insert it in the box.";
-char strWrite3[ ] = "Name: ________________________";
-char strWrite4[ ] = "-------------TEAR-------------";
-*/
-
-// game variables
-long randNumber = 0;
-
 
 /***************** Reuseable strings *****************/
 /* This is where code action starts. However, because the 
@@ -102,14 +94,23 @@ void txtWrite1(){
 void txtWrite2(){
   printer.println(F("receipt. Insert it in the box."));}
 void txtWrite3(){
-  printer.println(F("-------------TEAR-------------"));}
+  printer.println(F("Name: ________________________"));}
 void txtWrite4(){
-  printer.println(F("Write your name on this"));}
+  printer.println(F("-------------TEAR-------------"));}
 
 
 /***************** Let's get going! *****************/
 void setup()
 {
+  Wire.begin();
+  int Status = myClock.isRunning();
+    // if unset, then set the clock
+    if (Status == false){
+      myClock.reset();   // sets all registeres in stable states
+                  //year, month, day, weekday, hour, minute, second
+      myClock.setTime(0x13, 0x01, 0x10, 0x05, 0x14, 0x20, 0x00);
+    }
+  
   pinMode(ledPin, OUTPUT);
   pinMode(BAenable, OUTPUT);
   pinMode(auditBtn, INPUT);
@@ -277,9 +278,8 @@ void donateProcess(){
   lcd.setCursor(0,1);
   lcd.print("donations this month");
   delay(1000);
-  printDonation();
+//  printDonation();
   cashIn();
-  donateGame();
 }
 
 /************** Memebership Process **************/
@@ -302,10 +302,10 @@ void membershipProcess(){
   EEPROM.write(transactionAudit, transactionNumber);
   
   delay(1000);
+  myClock.getTime();
   printTHScopy();
   printMembership();
   cashIn();
-  membershipGame();
 }
 /************** Idling - attract **************/
 void idling(){
@@ -332,6 +332,17 @@ void idling(){
        msgNumber++;
        break;
        }
+  lcd.setCursor(0,1);
+  myClock.getTime();
+  lcd.print(myClock.Year, HEX);
+  lcd.print("/");
+  lcd.print(myClock.Month, HEX);
+  lcd.print("/");
+  lcd.print(myClock.Day, HEX);
+  lcd.print(" ");
+  lcd.print(myClock.Hour);
+  lcd.print(":");
+  lcd.print(myClock.Minute);
  }
  if(msgNumber >= 3){  // set number of messages and resets
    msgNumber = 0;
@@ -365,8 +376,6 @@ void setLEDs(){
   } 
 }
 
-/************** Get RTC time **************/
-
 /********* Print member's receipt *********/
 void printMembership(){
   lcd.clear();
@@ -379,7 +388,16 @@ void printMembership(){
   printer.print("Receipt #M");
   printer.println(EEPROM.read(transactionAudit));
   printer.setSize('S');
-  printer.println("Date: ");
+  printer.print("Date: ");
+  printer.print(myClock.Year, HEX);
+  printer.print("/");
+  printer.print(myClock.Month, HEX);
+  printer.print("/");
+  printer.println(myClock.Day, HEX);
+  printer.print("Time: ");
+  printer.print(myClock.Hour);
+  printer.print(":");
+  printer.println(myClock.Minute);
           // fill with date printing code later
   printer.feed(3);
   printer.println("Keep this receipt!");
@@ -405,13 +423,21 @@ void printTHScopy(){
   printer.print("Receipt #M");
   printer.println(EEPROM.read(transactionAudit));
   printer.setSize('S');
-  printer.println("Date: ");
-          // fill with date printing code later
+  printer.print("Date: ");
+  printer.print(myClock.Year, HEX);
+  printer.print("/");
+  printer.print(myClock.Month, HEX);
+  printer.print("/");
+  printer.println(myClock.Day, HEX);
+  printer.print("Time: ");
+  printer.print(myClock.Hour);
+  printer.print(":");
+  printer.println(myClock.Minute);
   printer.feed(3);
   txtWrite1();
   txtWrite2();
   printer.feed(3);
-  txtWrite3();
+  txtWrite3;
   printer.feed(3);
   txtWrite4();
   printer.feed(3);
@@ -439,90 +465,4 @@ void printDonation(){
   txtWrite4();
   printer.feed(3);
 }
-
-/********* donation game ***********/
-void donateGame(){
- if (randNumber == 0){
-   randomSeed(millis());}
-  
-  lcd.clear();
-  lcd.print("Let's play a game!");
-  lcd.setCursor(0, 1);
-  lcd.print("****randomizing****");
-  delay(1000);
-  randNumber = random(1, 5);
-  if (randNumber == 3){
-    donateWinner();}
-    else {
-      donateLooser();}  
-}
-
-void donateWinner(){
- lcd.clear();
- txtWinner();
- 
- printer.setSize('L');
- txtTHS();
- printer.setSize('M');
- printer.println("PRIZE");
- printer.println("500 yen off!");
- printer.setSize('S');
- printer.feed(3);
- printer.println("Return this receipt at a class");
- printer.println("of your choice for a discount.");
- printer.feed(3);
- txtWrite4();
- printer.feed(3);
-}
-
-void donateLooser(){
-  lcd.clear();
- txtSorry();
- delay(1000);
-}
-
-/********* membership game ***********/
-void membershipGame(){
-  if (randNumber == 0){
-    randomSeed(millis());}
-  
-  lcd.clear();
-  lcd.print("Let's play a game!");
-  lcd.setCursor(0, 1);
-  lcd.print("****randomizing****");
-  delay(1000);
-  randNumber = random(1, 7);
-  if (randNumber == 4){
-    membershipWinner();}
-    else {
-      membershipLooser();}  
-}
-
-void membershipWinner(){
- lcd.clear();
- txtWinner();
- 
- printer.setSize('L');
- txtTHS();
- printer.setSize('M');
- printer.println("PRIZE");
- printer.println("ONE MONTH FREE!!");
- printer.setSize('S');
- printer.feed(3);
- txtWrite1();
- txtWrite2();
- printer.println("We'll give you a free month!");
- printer.feed(3);
- txtWrite3();
- printer.feed(3);
- txtWrite4();
- printer.feed(3);
-}
-
-void membershipLooser(){
-  lcd.clear();
- txtSorry();
- delay(1000);
-}
-
 
