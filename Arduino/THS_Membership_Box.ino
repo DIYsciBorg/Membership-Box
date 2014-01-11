@@ -1,10 +1,26 @@
-/* Bill acceptor applications
-    DIY-SciB.org
-    TokyoHackerSpace.org
+/* Tokyo HackerSpace Membership payment box
+      Written by Emery Premeaux
+      DIY-SciB.org
+      TokyoHackerSpace.org
     
-    copyright shit goes here */
+      This project is open source
+      Feel free to use, modify or redistribute
+      It would be nice if you keep the original
+      author information above.  ;)
+*/
     
-const float ver = 0.90;
+const float ver = 1.01;
+
+/* clock settings
+    If the clock is not running on bootup (backup battery died),
+    Set the clock with these values:  */
+int setYear    =  0x14;
+int setMonth   =  0x01;
+int setDay     =  0x11;
+int setWeekday =  0x06; // 0:Sunday
+int setHour    =  0x20;
+int setMinute  =  0x47;
+int setSecond  =  0x00;
 
 /*    
     PINS:
@@ -108,7 +124,7 @@ void setup()
     if (Status == false){
       myClock.reset();   // sets all registeres in stable states
                   //year, month, day, weekday, hour, minute, second
-      myClock.setTime(0x13, 0x01, 0x10, 0x05, 0x14, 0x20, 0x00);
+      myClock.setTime(setYear, setMonth, setDay, setWeekday, setHour, setMinute, setSecond);
     }
   
   pinMode(ledPin, OUTPUT);
