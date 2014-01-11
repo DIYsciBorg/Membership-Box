@@ -7,6 +7,8 @@
       Feel free to use, modify or redistribute
       It would be nice if you keep the original
       author information above.  ;)
+	  
+	  Written on Arduino v 1.0.4
 */
     
 const float ver = 1.01;
