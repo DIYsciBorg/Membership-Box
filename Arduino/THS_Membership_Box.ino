@@ -7,11 +7,11 @@
       Feel free to use, modify or redistribute
       It would be nice if you keep the original
       author information above.  ;)
-      
-      Written on Arduino v 1.0.4
+	  
+	  Written on Arduino v 1.0.4
 */
     
-const float ver = 1.02;
+const float ver = 1.01;
 
 /* clock settings
     If the clock is not running on bootup (backup battery died),
@@ -74,8 +74,8 @@ long previousAttractMillis = 0;
 long attractInterval = 10000;
 
 // Bill insertion and wait
-unsigned int cashCount = 0;  // counter for cash inserted
-unsigned int previousCashCount = 0;
+volatile byte cashCount = 0;  // counter for cash inserted
+int previousCashCount = 0;
 long previousInsertMillis = 0;
 long insertInterval = 1000; // wait for 10000 yen bills
 
@@ -162,10 +162,11 @@ void setup()
 /************** what to do in ISR **************/
 void caChing()
 {
-  delay(45);
-  if(digitalRead(BApulse)==LOW){
-    cashCount++;    // for every bill pulse, add 1
-    cashIn();
+  cashCount++;    // for every bill pulse, add 1
+   unsigned long currentInsertMillis = millis();
+  if(currentInsertMillis - previousInsertMillis > insertInterval){
+   previousInsertMillis = currentInsertMillis;
+   cashIn();
   }
 }
 
@@ -454,7 +455,7 @@ void printTHScopy(){
   txtWrite1();
   txtWrite2();
   printer.feed(3);
-  txtWrite3();
+  txtWrite3;
   printer.feed(3);
   txtWrite4();
   printer.feed(3);
