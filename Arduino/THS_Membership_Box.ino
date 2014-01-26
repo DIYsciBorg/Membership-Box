@@ -11,7 +11,7 @@
       Written on Arduino v 1.0.4
 */
     
-const float ver = 1.02;
+const float ver = 1.03;
 
 /* clock settings
     If the clock is not running on bootup (backup battery died),
@@ -216,16 +216,15 @@ void auditProcess(){
   lcd.print("Audit mode!");
   delay(1000);
   lcd.clear();
-  lcd.print("Donations: ");
+  lcd.print("Dnt: ");
   lcd.print(EEPROM.read(donationAudit));
-  lcd.setCursor(0,1);
-  lcd.print("Memberships: ");
+  lcd.setCursor(11,0);
+  lcd.print("Mbrs: ");
   lcd.print(EEPROM.read(membershipAudit));
-  delay(3000);
-  lcd.clear();
-  lcd.print("EXIT: Audit");
   lcd.setCursor(0,1);
-  lcd.print("Clear: Membership");
+  lcd.print("EXT:Audit");
+  lcd.setCursor(11,1);
+  lcd.print("Clr:Mbrs");
   
   int holdingPattern = 1;
   while (holdingPattern = 1){
@@ -270,6 +269,7 @@ void clearAudits(){
 /************** Donate Process **************/
 void donateProcess(){
   digitalWrite(BAenable, BAoff);
+  printer.wake();
   lcd.clear();
   lcd.print("Thank you for your");
   lcd.setCursor(5,1);
@@ -295,13 +295,14 @@ void donateProcess(){
   lcd.setCursor(0,1);
   lcd.print("donations this month");
   delay(1000);
-//  printDonation();
+  printDonation();
   cashIn();
 }
 
 /************** Memebership Process **************/
 void membershipProcess(){
   digitalWrite(BAenable, BAoff);
+  printer.wake();
   lcd.clear();
   lcd.print("Printing receipts");
   cashCount = (cashCount - 5);
@@ -473,9 +474,20 @@ void printDonation(){
   printer.print("Receipt #D");
   printer.println(EEPROM.read(transactionAudit));
   printer.setSize('S');
-  printer.println("Date: ");
-          // fill with date printing code later
-  printer.feed(3);
+  myClock.getTime();
+  printer.print("Date: ");
+  printer.print(myClock.Year, HEX);
+  printer.print("/");
+  printer.print(myClock.Month, HEX);
+  printer.print("/");
+  printer.println(myClock.Day, HEX);
+  printer.print("Time: ");
+  printer.print(myClock.Hour);
+  printer.print(":");
+  printer.println(myClock.Minute);
+  printer.feed(1);
+  printer.println("(^_^)     (^_^)     (^_^)");
+  printer.println();
   printer.println("Thank you for your donation.");
   printer.println("It will help us pay the bills.");
   printer.feed(3);
