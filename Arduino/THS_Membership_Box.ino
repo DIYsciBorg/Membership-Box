@@ -8,20 +8,21 @@
       It would be nice if you keep the original
       author information above.  ;)
       
-      Written on Arduino v 1.0.4
+      Written on Arduino v 1.10
+      date: 9/25/16
 */
     
-const float ver = 1.03;
+const float ver = 1.10;
 
 /* clock settings
     If the clock is not running on bootup (backup battery died),
     Set the clock with these values:  */
-int setYear    =  0x14;
-int setMonth   =  0x01;
-int setDay     =  0x11;
-int setWeekday =  0x06; // 0:Sunday
-int setHour    =  0x20;
-int setMinute  =  0x47;
+int setYear    =  0x16;
+int setMonth   =  0x09;
+int setDay     =  0x18;
+int setWeekday =  0x00; // 0:Sunday
+int setHour    =  0x18;
+int setMinute  =  0x04;
 int setSecond  =  0x00;
 
 /*    
@@ -44,7 +45,10 @@ int setSecond  =  0x00;
 // HARDWARE startups
 #include <SoftwareSerial.h>
 #include "Adafruit_Thermal.h"
-Adafruit_Thermal printer(11,10);  // RX, TX
+#define TX_PIN 10
+#define RX_PIN 11
+SoftwareSerial mySerial(RX_PIN, TX_PIN);
+Adafruit_Thermal printer(&mySerial);  // RX, TX
 
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(9, 8, 7, 6, 5, 4);
@@ -120,6 +124,14 @@ void txtWrite4(){
 /***************** Let's get going! *****************/
 void setup()
 {
+  mySerial.begin(19200);
+  printer.begin();
+  
+  lcd.begin(20, 2);
+  lcd.print("THS Payment Box");
+  lcd.setCursor(6,1);
+  lcd.print("ver: ");
+  lcd.print(ver);
   Wire.begin();
   int Status = myClock.isRunning();
     // if unset, then set the clock
@@ -128,7 +140,9 @@ void setup()
                   //year, month, day, weekday, hour, minute, second
       myClock.setTime(setYear, setMonth, setDay, setWeekday, setHour, setMinute, setSecond);
     }
-  
+  lcd.setCursor(0,1);
+  lcd.print("clock is running");
+  delay(1000);
   pinMode(ledPin, OUTPUT);
   pinMode(BAenable, OUTPUT);
   pinMode(auditBtn, INPUT);
@@ -143,20 +157,17 @@ void setup()
   digitalWrite(BAenable, BAoff);
   
   printer.begin();
-
-  lcd.begin(20, 2);
-  lcd.print("THS Payment Box");
-  lcd.setCursor(6,1);
-  lcd.print("ver: ");
-  lcd.print(ver);
-  
+  lcd.setCursor(0,1); 
+  lcd.print("printer is running");
+  delay(1000);
   attachInterrupt(0, caChing, FALLING);
   
   delay(3000);          // Wait for the BA to boot
  // EEPROM.write(escrowAudit, 0);   // just long enough to clear the eeprom. then remove and upload
   cashCount = EEPROM.read(escrowAudit); 
-  
-  
+  lcd.setCursor(0,1);
+  lcd.print("EEPROM checked");
+  delay(1000);
 }
 
 /************** what to do in ISR **************/
